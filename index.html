@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mono Status</title>
+  <title>Room Status</title>
   <style>
     body {
       margin: 0;
@@ -16,48 +16,61 @@
       overflow: hidden; 
     }
     
+    /* 古いAndroid用に -webkit- を追加 */
     #main-screen {
+      display: -webkit-flex;
       display: flex;
+      -webkit-flex-direction: column;
       flex-direction: column;
       height: 100vh;
       width: 100vw;
       cursor: default;
     }
     
-    /* === 上部：名前プレートセクション === */
     #nameplate-section {
+      display: -webkit-flex;
       display: flex;
-      flex-direction: row; /* 縦並びから横並びに変更 */
+      -webkit-flex-direction: row;
+      flex-direction: row;
+      -webkit-justify-content: center;
       justify-content: center;
+      -webkit-align-items: center;
       align-items: center;
       padding: 4vh 0;
       border-bottom: 4px solid #000000;
       height: 25vh; 
       box-sizing: border-box;
-      gap: 4vw; /* 韓国語と日・英の間の余白 */
     }
 
     .korean-name {
       font-size: 15vw;
       font-weight: bold;
       line-height: 1.1;
+      /* gapの代わりにmargin-rightを使用 */
+      margin-right: 4vw; 
     }
 
     .ja-en-name {
+      display: -webkit-flex;
       display: flex;
+      -webkit-flex-direction: column;
       flex-direction: column;
+      -webkit-justify-content: center;
       justify-content: center;
-      text-align: left; /* 右側に配置するため左揃えに変更 */
+      text-align: left; 
       font-size: 5vw; 
       line-height: 1;
       font-weight: bold;
     }
 
-    /* === 下部：ステータス表示セクション === */
     #status-section {
+      display: -webkit-flex;
       display: flex;
+      -webkit-justify-content: center;
       justify-content: center;
+      -webkit-align-items: center;
       align-items: center;
+      -webkit-flex-grow: 1;
       flex-grow: 1; 
       box-sizing: border-box;
     }
@@ -69,7 +82,6 @@
       width: 90%;
     }
 
-    /* メニュー画面 */
     #list-screen {
       display: none;
       position: absolute; 
@@ -89,7 +101,6 @@
       cursor: pointer;
     }
 
-    /* パスワードリセットボタン */
     .reset-btn {
       font-size: 5vw;
       font-weight: bold;
@@ -118,7 +129,6 @@
   <div class="secret-zone" style="bottom:0; right:0;" onclick="secretTap(4);"></div>
 
   <div id="main-screen">
-    
     <div id="nameplate-section">
       <div class="korean-name">모노</div>
       <div class="ja-en-name">
@@ -126,11 +136,9 @@
         <div>Mono</div>
       </div>
     </div>
-
     <div id="status-section">
       <div id="status-display" class="status-text">読込中...</div>
     </div>
-
   </div>
 
   <div id="list-screen">
@@ -211,6 +219,8 @@
 
     function hideList() {
       listScreen.style.display = 'none';
+      // -webkit-flex も指定しておく
+      mainScreen.style.display = '-webkit-flex';
       mainScreen.style.display = 'flex';
     }
 
