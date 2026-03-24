@@ -24,82 +24,84 @@
       cursor: default;
     }
     
-    /* === 上部：名前プレートセクション（テーブルレイアウトに変更） === */
+    /* === 上部：名前プレートセクション === */
     #nameplate-section {
+      display: table;
       width: 100%;
-      height: 25vh;
+      height: 180px; /* vwをやめてpxで高さを固定 */
       border-bottom: 4px solid #000000;
       box-sizing: border-box;
-      text-align: center; /* 中のテーブルを中央寄せ */
-      padding: 3vh 0;
     }
-
-    /* 名前全体を囲む仮想テーブル */
-    .name-wrapper {
-      display: inline-table;
-      height: 100%;
-    }
-
-    /* 韓国語名前（テーブルの左セル） */
-    .korean-name {
+    
+    .nameplate-inner {
       display: table-cell;
       vertical-align: middle;
-      font-size: 15vw;
-      font-weight: bold;
-      padding-right: 4vw; /* 日本語・英語との隙間 */
+      text-align: center;
     }
 
-    /* 日・英名前（テーブルの右セル） */
+    .korean-name {
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 64px; /* pxで巨大に指定 */
+      font-weight: bold;
+      line-height: 1;
+      margin-right: 20px;
+    }
+
     .ja-en-name {
-      display: table-cell;
+      display: inline-block;
       vertical-align: middle;
       text-align: left; 
-      font-size: 7vw; 
+      font-size: 28px; /* pxで中くらいに指定 */
+      line-height: 1.2;
+      color: #333333; 
     }
 
-    /* === 下部：ステータス表示セクション（テーブルレイアウトに変更） === */
+    /* === 下部：ステータス表示セクション === */
     #status-section {
-      width: 100%;
-      height: 75vh; /* 残りの75% */
       display: table;
+      width: 100%;
+      height: 400px; /* ここもpxで高さを確保 */
     }
+    
     .status-text-wrapper {
       display: table-cell;
       vertical-align: middle;
       text-align: center;
     }
+    
     .status-text {
-      font-size: 16vw; 
+      font-size: 110px; /* ステータス文字を最大に */
       font-weight: bold;
-      line-height: 1.2;
+      line-height: 1.1;
     }
 
-    /* メニュー画面 */
+    /* === リスト・メニュー画面 === */
     #list-screen {
       display: none;
       position: absolute; 
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      width: 100%; height: 100%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background-color: #ffffff;
       z-index: 1000;
     }
     .list-item {
-      font-size: 8vw;
+      font-size: 50px; /* リストもpx指定 */
       font-weight: bold;
-      padding: 5vh 0;
+      padding: 40px 0;
       text-align: center;
       border-bottom: 2px solid #000000;
       cursor: pointer;
     }
 
     .reset-btn {
-      font-size: 5vw;
+      font-size: 30px;
       font-weight: bold;
       text-align: center;
-      padding: 4vh 0;
-      margin-top: 5vh; 
+      padding: 30px 0;
+      margin-top: 40px; 
       border-top: 4px solid #000000;
       background-color: #e0e0e0;
       cursor: pointer;
@@ -107,8 +109,8 @@
 
     .secret-zone {
       position: absolute;
-      width: 25vw;
-      height: 25vh;
+      width: 25%;
+      height: 25%;
       z-index: 999;
       background-color: transparent;
     }
@@ -122,13 +124,12 @@
   <div class="secret-zone" style="bottom:0; right:0;" onclick="secretTap(4);"></div>
 
   <div id="main-screen">
-    
     <div id="nameplate-section">
-      <div class="name-wrapper">
-        <div class="korean-name">징크 옥사이드</div>
+      <div class="nameplate-inner">
+        <div class="korean-name">모노</div>
         <div class="ja-en-name">
-          <div>ジンク・オクサイド</div>
-          <div>Zinc Oxide</div>
+          <div>モノ</div>
+          <div>Mono</div>
         </div>
       </div>
     </div>
@@ -138,7 +139,6 @@
         <div id="status-display" class="status-text">読込中...</div>
       </div>
     </div>
-
   </div>
 
   <div id="list-screen">
@@ -153,13 +153,8 @@
       "짐승합격중\n獣化中\nFursuiting",
       "휴식중\n休憩中\nResting"
     ];
-    
-    var currentIndex = 0;
-    var savedIndex = localStorage.getItem('room_status_index');
-    if (savedIndex !== null) {
-      currentIndex = parseInt(savedIndex, 10);
-      if (currentIndex >= statuses.length) currentIndex = 0;
-    }
+    var currentIndex = parseInt(localStorage.getItem('room_status_index')) || 0;
+    if (currentIndex >= statuses.length) currentIndex = 0;
 
     var mainScreen = document.getElementById('main-screen');
     var listScreen = document.getElementById('list-screen');
@@ -167,72 +162,52 @@
     var listContainer = document.getElementById('list-container');
 
     var adminPassword = localStorage.getItem('room_status_admin_pw');
-    
     if (!adminPassword) {
-      adminPassword = prompt("【初回設定】\n更新用のパスワードを新しく決めて入力してください。");
-      if (adminPassword) {
-        localStorage.setItem('room_status_admin_pw', adminPassword);
-        alert("パスワードを設定しました。");
-      } else {
-        localStorage.setItem('room_status_admin_pw', '0000');
-        alert("パスワードが空のため、仮パスワード「0000」を設定しました。");
-      }
+      adminPassword = prompt("【初回設定】\n更新用のパスワードを入力してください。") || '0000';
+      localStorage.setItem('room_status_admin_pw', adminPassword);
     }
 
     function checkAuthAndShowList() {
-      var input = prompt("パスワードを入力してください");
-      var savedPassword = localStorage.getItem('room_status_admin_pw');
-      
-      if (input === savedPassword) {
+      if (prompt("パスワードを入力してください") === localStorage.getItem('room_status_admin_pw')) {
         mainScreen.style.display = 'none';
         listScreen.style.display = 'block'; 
-      } else if (input !== null) {
-        alert("パスワードが違います。");
+      } else {
+        alert("不一致");
       }
     }
 
     var secretSequence = [];
     function secretTap(zoneNum) {
       secretSequence.push(zoneNum);
-      
-      if (secretSequence.length > 4) {
-        secretSequence.shift();
-      }
-      
-      if (secretSequence.join(',') === '1,2,3,4') {
+      if (secretSequence.length > 4) secretSequence.shift();
+      if (secretSequence.join('') === '1234') {
         secretSequence = [];
         checkAuthAndShowList();
       }
     }
 
     function resetPassword() {
-      if (confirm("パスワードをリセットして、ページを再読み込みしますか？")) {
+      if (confirm("リセットしますか？")) {
         localStorage.removeItem('room_status_admin_pw');
         location.reload();
       }
     }
 
     function updateDisplay() {
-      var text = statuses[currentIndex];
-      displayEl.innerHTML = text.replace(/\n/g, '<br>');
-    }
-
-    function hideList() {
-      listScreen.style.display = 'none';
-      mainScreen.style.display = 'block';
+      displayEl.innerHTML = statuses[currentIndex].replace(/\n/g, '<br>');
     }
 
     function selectStatus(index) {
       currentIndex = index;
-      localStorage.setItem('room_status_index', currentIndex);
+      localStorage.setItem('room_status_index', index);
       updateDisplay();
-      hideList();
+      listScreen.style.display = 'none';
+      mainScreen.style.display = 'block';
     }
 
     var listHtml = "";
     for (var i = 0; i < statuses.length; i++) {
-      var displayText = statuses[i].replace(/\n/g, ' ');
-      listHtml += '<div class="list-item" onclick="selectStatus(' + i + ')">' + displayText + '</div>';
+      listHtml += '<div class="list-item" onclick="selectStatus(' + i + ')">' + statuses[i].replace(/\n/g, ' ') + '</div>';
     }
     listContainer.innerHTML = listHtml;
 
