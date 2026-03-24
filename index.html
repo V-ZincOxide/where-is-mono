@@ -2,101 +2,233 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Room Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mono Status</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       background-color: #ffffff;
       color: #000000;
       font-family: sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow: hidden; 
+    }
+    
+    #main-screen {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      cursor: default;
+    }
+    
+    /* === 上部：名前プレートセクション === */
+    #nameplate-section {
+      display: flex;
+      flex-direction: row; /* 縦並びから横並びに変更 */
+      justify-content: center;
+      align-items: center;
+      padding: 4vh 0;
+      border-bottom: 4px solid #000000;
+      height: 25vh; 
+      box-sizing: border-box;
+      gap: 4vw; /* 韓国語と日・英の間の余白 */
+    }
+
+    .korean-name {
+      font-size: 15vw;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .ja-en-name {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left; /* 右側に配置するため左揃えに変更 */
+      font-size: 5vw; 
+      line-height: 1;
+      font-weight: bold;
+    }
+
+    /* === 下部：ステータス表示セクション === */
+    #status-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-grow: 1; 
+      box-sizing: border-box;
     }
     .status-text {
-      font-size: 12vw;
+      font-size: 16vw; 
       font-weight: bold;
       text-align: center;
-      margin: 2vh 0;
       line-height: 1.2;
+      width: 90%;
+    }
+
+    /* メニュー画面 */
+    #list-screen {
+      display: none;
+      position: absolute; 
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background-color: #ffffff;
+      z-index: 1000;
+    }
+    .list-item {
+      font-size: 8vw;
+      font-weight: bold;
+      padding: 5vh 0;
+      text-align: center;
+      border-bottom: 2px solid #000000;
+      cursor: pointer;
+    }
+
+    /* パスワードリセットボタン */
+    .reset-btn {
+      font-size: 5vw;
+      font-weight: bold;
+      text-align: center;
+      padding: 4vh 0;
+      margin-top: 5vh; 
+      border-top: 4px solid #000000;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    .secret-zone {
+      position: absolute;
+      width: 25vw;
+      height: 25vh;
+      z-index: 999;
+      background-color: transparent;
     }
   </style>
 </head>
 <body>
-  <div id="display-area">
-    <div class="status-text">読込中...</div>
+
+  <div class="secret-zone" style="top:0; left:0;" onclick="secretTap(1);"></div>
+  <div class="secret-zone" style="top:0; right:0;" onclick="secretTap(2);"></div>
+  <div class="secret-zone" style="bottom:0; left:0;" onclick="secretTap(3);"></div>
+  <div class="secret-zone" style="bottom:0; right:0;" onclick="secretTap(4);"></div>
+
+  <div id="main-screen">
+    
+    <div id="nameplate-section">
+      <div class="korean-name">모노</div>
+      <div class="ja-en-name">
+        <div>モノ</div>
+        <div>Mono</div>
+      </div>
+    </div>
+
+    <div id="status-section">
+      <div id="status-display" class="status-text">読込中...</div>
+    </div>
+
+  </div>
+
+  <div id="list-screen">
+    <div id="list-container"></div>
+    <div class="reset-btn" onclick="resetPassword()">パスワードをリセットして初期化</div>
   </div>
 
   <script>
-    // ここはお前のGASのデプロイURLに書き換える（?key= は抜いておく）
-    var gasBaseUrl = "https://script.google.com/macros/s/AKfycby_H9oDJYJxH83K654mShMQq4XupJnaCaDylWI_ADmhOxIe75gsbFSZCIQUK-nQGDHqzw/exec";
+    var statuses = [
+      "재실\n在室\nIn room",
+      "외출중\n外出中\nAway",
+      "짐승합격중\n獣化中\nFursuiting",
+      "휴식중\n休憩中\nResting"
+    ];
+    
+    var currentIndex = 0;
+    var savedIndex = localStorage.getItem('room_status_index');
+    if (savedIndex !== null) {
+      currentIndex = parseInt(savedIndex, 10);
+      if (currentIndex >= statuses.length) currentIndex = 0;
+    }
 
-    // ブラウザに保存された合言葉を取得。なければポップアップで入力させる
-    var secretKey = localStorage.getItem('room_status_key');
-    if (!secretKey) {
-      secretKey = prompt("合言葉を入力してください");
-      if (secretKey) {
-        localStorage.setItem('room_status_key', secretKey);
+    var mainScreen = document.getElementById('main-screen');
+    var listScreen = document.getElementById('list-screen');
+    var displayEl = document.getElementById('status-display');
+    var listContainer = document.getElementById('list-container');
+
+    var adminPassword = localStorage.getItem('room_status_admin_pw');
+    
+    if (!adminPassword) {
+      adminPassword = prompt("【初回設定】\n更新用のパスワードを新しく決めて入力してください。");
+      if (adminPassword) {
+        localStorage.setItem('room_status_admin_pw', adminPassword);
+        alert("パスワードを設定しました。");
+      } else {
+        localStorage.setItem('room_status_admin_pw', '0000');
+        alert("パスワードが空のため、仮パスワード「0000」を設定しました。");
       }
     }
 
-    // データを取得して画面を書き換える関数
-    function fetchData() {
-      if (!secretKey) {
-        document.getElementById('display-area').innerHTML = '<div class="status-text">合言葉がありません</div>';
-        return;
+    function checkAuthAndShowList() {
+      var input = prompt("パスワードを入力してください");
+      var savedPassword = localStorage.getItem('room_status_admin_pw');
+      
+      if (input === savedPassword) {
+        mainScreen.style.display = 'none';
+        listScreen.style.display = 'block'; 
+      } else if (input !== null) {
+        alert("パスワードが違います。");
       }
-
-      // URLの末尾に合言葉をくっつける
-      var gasUrl = gasBaseUrl + "?key=" + encodeURIComponent(secretKey);
-      
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', gasUrl, true);
-      
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          try {
-            var data = JSON.parse(xhr.responseText);
-            
-            // GASからエラーが返ってきた場合（合言葉の間違いなど）
-            if (data[0] === "エラー") {
-              document.getElementById('display-area').innerHTML = '<div class="status-text">認証エラー</div>';
-              // 間違った合言葉を記憶から消して、3秒後にページを読み込み直す（再びポップアップが出る）
-              localStorage.removeItem('room_status_key');
-              setTimeout(function(){ location.reload(); }, 3000);
-              return;
-            }
-            
-            // 正常にデータが取れたら画面を書き換える
-            var html = "";
-            for (var i = 0; i < data.length; i++) {
-              html += '<div class="status-text">' + data[i] + '</div>';
-            }
-            document.getElementById('display-area').innerHTML = html;
-            
-          } catch (e) {
-            document.getElementById('display-area').innerHTML = '<div class="status-text">データ異常</div>';
-          }
-        } else {
-          document.getElementById('display-area').innerHTML = '<div class="status-text">通信エラー</div>';
-        }
-      };
-      
-      xhr.onerror = function() {
-        document.getElementById('display-area').innerHTML = '<div class="status-text">読込失敗</div>';
-      };
-      
-      xhr.send();
     }
 
-    // ページを開いた時に最初の1回を実行
-    fetchData();
+    var secretSequence = [];
+    function secretTap(zoneNum) {
+      secretSequence.push(zoneNum);
+      
+      if (secretSequence.length > 4) {
+        secretSequence.shift();
+      }
+      
+      if (secretSequence.join(',') === '1,2,3,4') {
+        secretSequence = [];
+        checkAuthAndShowList();
+      }
+    }
 
-    // 5分(300000ミリ秒)ごとにfetchDataを裏側で繰り返し実行する
-    setInterval(fetchData, 300000);
+    function resetPassword() {
+      if (confirm("パスワードをリセットして、ページを再読み込みしますか？")) {
+        localStorage.removeItem('room_status_admin_pw');
+        location.reload();
+      }
+    }
+
+    function updateDisplay() {
+      var text = statuses[currentIndex];
+      displayEl.innerHTML = text.replace(/\n/g, '<br>');
+    }
+
+    function hideList() {
+      listScreen.style.display = 'none';
+      mainScreen.style.display = 'flex';
+    }
+
+    function selectStatus(index) {
+      currentIndex = index;
+      localStorage.setItem('room_status_index', currentIndex);
+      updateDisplay();
+      hideList();
+    }
+
+    var listHtml = "";
+    for (var i = 0; i < statuses.length; i++) {
+      var displayText = statuses[i].replace(/\n/g, ' ');
+      listHtml += '<div class="list-item" onclick="selectStatus(' + i + ')">' + displayText + '</div>';
+    }
+    listContainer.innerHTML = listHtml;
+
+    updateDisplay();
   </script>
 </body>
 </html>
