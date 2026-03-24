@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Room Status</title>
   <style>
-    body {
+    body, html {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
       background-color: #ffffff;
       color: #000000;
       font-family: sans-serif;
@@ -16,72 +18,63 @@
       overflow: hidden; 
     }
     
-    /* 古いAndroid用に -webkit- を追加 */
     #main-screen {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-direction: column;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
+      width: 100%;
+      height: 100%;
       cursor: default;
     }
     
+    /* === 上部：名前プレートセクション（テーブルレイアウトに変更） === */
     #nameplate-section {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-direction: row;
-      flex-direction: row;
-      -webkit-justify-content: center;
-      justify-content: center;
-      -webkit-align-items: center;
-      align-items: center;
-      padding: 4vh 0;
+      width: 100%;
+      height: 25vh;
       border-bottom: 4px solid #000000;
-      height: 25vh; 
       box-sizing: border-box;
+      text-align: center; /* 中のテーブルを中央寄せ */
+      padding: 3vh 0;
     }
 
+    /* 名前全体を囲む仮想テーブル */
+    .name-wrapper {
+      display: inline-table;
+      height: 100%;
+    }
+
+    /* 韓国語名前（テーブルの左セル） */
     .korean-name {
+      display: table-cell;
+      vertical-align: middle;
       font-size: 15vw;
       font-weight: bold;
-      line-height: 1.1;
-      /* gapの代わりにmargin-rightを使用 */
-      margin-right: 4vw; 
+      padding-right: 4vw; /* 日本語・英語との隙間 */
     }
 
+    /* 日・英名前（テーブルの右セル） */
     .ja-en-name {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-direction: column;
-      flex-direction: column;
-      -webkit-justify-content: center;
-      justify-content: center;
+      display: table-cell;
+      vertical-align: middle;
       text-align: left; 
-      font-size: 5vw; 
-      line-height: 1;
-      font-weight: bold;
+      font-size: 7vw; 
     }
 
+    /* === 下部：ステータス表示セクション（テーブルレイアウトに変更） === */
     #status-section {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-justify-content: center;
-      justify-content: center;
-      -webkit-align-items: center;
-      align-items: center;
-      -webkit-flex-grow: 1;
-      flex-grow: 1; 
-      box-sizing: border-box;
+      width: 100%;
+      height: 75vh; /* 残りの75% */
+      display: table;
+    }
+    .status-text-wrapper {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: center;
     }
     .status-text {
       font-size: 16vw; 
       font-weight: bold;
-      text-align: center;
       line-height: 1.2;
-      width: 90%;
     }
 
+    /* メニュー画面 */
     #list-screen {
       display: none;
       position: absolute; 
@@ -129,16 +122,23 @@
   <div class="secret-zone" style="bottom:0; right:0;" onclick="secretTap(4);"></div>
 
   <div id="main-screen">
+    
     <div id="nameplate-section">
-      <div class="korean-name">모노</div>
-      <div class="ja-en-name">
-        <div>モノ</div>
-        <div>Mono</div>
+      <div class="name-wrapper">
+        <div class="korean-name">징크 옥사이드</div>
+        <div class="ja-en-name">
+          <div>ジンク・オクサイド</div>
+          <div>Zinc Oxide</div>
+        </div>
       </div>
     </div>
+
     <div id="status-section">
-      <div id="status-display" class="status-text">読込中...</div>
+      <div class="status-text-wrapper">
+        <div id="status-display" class="status-text">読込中...</div>
+      </div>
     </div>
+
   </div>
 
   <div id="list-screen">
@@ -219,9 +219,7 @@
 
     function hideList() {
       listScreen.style.display = 'none';
-      // -webkit-flex も指定しておく
-      mainScreen.style.display = '-webkit-flex';
-      mainScreen.style.display = 'flex';
+      mainScreen.style.display = 'block';
     }
 
     function selectStatus(index) {
