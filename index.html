@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Room Status</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #ffffff;
+      color: #000000;
+      font-family: sans-serif;
+    }
+    .status-text {
+      font-size: 12vw;
+      font-weight: bold;
+      text-align: center;
+      margin: 2vh 0;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <div id="display-area">
+    <div class="status-text">読込中...</div>
+  </div>
+
+  <script>
+    // ここはお前のGASのデプロイURLに書き換える（?key= は抜いておく）
+    var gasBaseUrl = "https://script.google.com/macros/s/AKfycby_H9oDJYJxH83K654mShMQq4XupJnaCaDylWI_ADmhOxIe75gsbFSZCIQUK-nQGDHqzw/exec";
+
+    // ブラウザに保存された合言葉を取得。なければポップアップで入力させる
+    var secretKey = localStorage.getItem('room_status_key');
+    if (!secretKey) {
+      secretKey = prompt("合言葉を入力してください");
+      if (secretKey) {
+        localStorage.setItem('room_status_key', secretKey);
+      }
+    }
+
+    // データを取得して画面を書き換える関数
+    function fetchData() {
+      if (!secretKey) {
+        document.getElementById('display-area').innerHTML = '<div class="status-text">合言葉がありません</div>';
+        return;
+      }
+
+      // URLの末尾に合言葉をくっつける
+      var gasUrl = gasBaseUrl + "?key=" + encodeURIComponent(secretKey);
+      
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', gasUrl, true);
+      
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            
+            // GASからエラーが返ってきた場合（合言葉の間違いなど）
+            if (data[0] === "エラー") {
+              document.getElementById('display-area').innerHTML = '<div class="status-text">認証エラー</div>';
+              // 間違った合言葉を記憶から消して、3秒後にページを読み込み直す（再びポップアップが出る）
+              localStorage.removeItem('room_status_key');
+              setTimeout(function(){ location.reload(); }, 3000);
+              return;
+            }
+            
+            // 正常にデータが取れたら画面を書き換える
+            var html = "";
+            for (var i = 0; i < data.length; i++) {
+              html += '<div class="status-text">' + data[i] + '</div>';
+            }
+            document.getElementById('display-area').innerHTML = html;
+            
+          } catch (e) {
+            document.getElementById('display-area').innerHTML = '<div class="status-text">データ異常</div>';
+          }
+        } else {
+          document.getElementById('display-area').innerHTML = '<div class="status-text">通信エラー</div>';
+        }
+      };
+      
+      xhr.onerror = function() {
+        document.getElementById('display-area').innerHTML = '<div class="status-text">読込失敗</div>';
+      };
+      
+      xhr.send();
+    }
+
+    // ページを開いた時に最初の1回を実行
+    fetchData();
+
+    // 5分(300000ミリ秒)ごとにfetchDataを裏側で繰り返し実行する
+    setInterval(fetchData, 300000);
+  </script>
+</body>
+</html>
